@@ -1,0 +1,70 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: networkservices.nsm.akosrbn.io
+spec:
+  group: nsm.akosrbn.io
+  names:
+    kind: NetworkService
+    listKind: NetworkServiceList
+    plural: networkservices
+    singular: networkservice
+    shortNames:
+    - nsmsvc
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              serviceType:
+                type: string
+                description: "Type of the network service (e.g., L2, L3, VPN)"
+              endpoint:
+                type: string
+                description: "Network Service endpoint information"
+              ports:
+                type: array
+                items:
+                  type: integer
+                description: "Ports exposed by the service"
+              latencyRequirement:
+                type: integer
+                descrpiton: "Maximum latency requirement in milliseconds"
+              bandwidth:
+                type: integer
+                description: "Required bandwidth in Mbps"
+            status:
+              type: object
+              properties:
+                state:
+                  type: string
+                  description: "Current state of the Network Service"
+                connectionCount:
+                  type: integer
+                  description: "Number of active connections"
+                lastUpdated:
+                  type: string
+                  format: date-time
+                  description: "Last time the status was updated"
+    subresources:
+      status: {}
+    additionalPrinterColumns:
+    - name: Type
+      type: string
+      jsonPath: .spec.serviceType
+    - name: State
+      type: string
+      jsonPath: status.state
+    - name: Connections
+      type: integer
+      jsonPath: .status.connectionCount
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp

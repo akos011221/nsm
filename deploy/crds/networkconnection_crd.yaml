@@ -1,0 +1,82 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: networkconnections.nsm.akosrbn.io
+spec:
+  group: nsm.akosrbn.io
+  names:
+    kind: NetworkConnection
+    listKind: NetworkConnectionList
+    plural: networkconnections
+    singular: networkconnection
+    shortNames:
+    - nsmconn
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              source:
+                type: string
+                description: "Source endpoint for the connection"
+              destination:
+                type: string
+                description: "Destination network service name"
+              connectionType:
+                type: string
+                description: "Type of the connection required"
+              priority:
+                type: integer
+                description: "Connection priority (the higher the number the higher the priority)"
+            required:
+            - source
+            - destination
+            - connectionType
+        status:
+          type: object
+          properties:
+            state:
+              type: string
+              description: "Current state of the connection"
+            established:
+              type: boolean
+              description: "Whether the connection is established"
+            lastUpdated:
+              type: string
+              format: date-time
+              description: "Last time the status was updated"
+            metrics:
+              type: object
+              properties:
+                latency:
+                  type: integer
+                  description: "Current latency in milliseconds"
+                packetLoss:
+                  type: number
+                  format: float
+                  description: "Packet loss percentage"
+    subresources:
+      status: {}
+    additionalPrinterColumns:
+    - name: Source
+      type: string
+      jsonPath: .spec.source
+    - name: Destination
+      type: string
+      jsonPath: .spec.destination
+    - name: State
+      type: string
+      json: .status.state
+    - name: Established
+      type: boolean
+      jsonPath: .status.established
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
