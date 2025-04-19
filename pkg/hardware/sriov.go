@@ -157,7 +157,7 @@ func (m *SRIOVManager) discoverVirtualFunctions() error {
 		m.logger.Debugf("Found %d VFs for device %s", numVFs, pfName)
 
 		// get each VF's details
-		for vfID := 0; vfID < numVFs; vfID++ {
+		for vfID := range numVFs {
 			vf, err := m.getVFDetails(pfName, vfID)
 			if err != nil {
 				m.logger.WithError(err).Warnf("Failed to get details for VF %d of %s", vfID, pfName)
