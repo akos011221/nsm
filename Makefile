@@ -1,3 +1,0 @@
-.PHONY: generate
-generate:
-	controller-gen object paths=./api/v1/...
