@@ -1,0 +1,184 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: networkservices.nsm.akosrbn.io
+  # Annotations for documentation and API versioning
+  annotations:
+    api-approved.kubernetes.io: "https://github.com/akos011221/nsm"
+    doc.akosrbn.io/description: "Network Service Mesh network service definition"
+spec:
+  # Group name for the API
+  group: nsm.akosrbn.io
+  # List of versions for this CRD
+  versions:
+    - name: v1alpha1
+      # This is the current version being served
+      served: true
+      # This is the storage version
+      storage: true
+      schema:
+        # OpenAPIV3 schema for validation
+        openAPIV3Schema:
+          type: object
+          required: ["spec"]
+          properties:
+            spec:
+              type: object
+              required: ["priority", "latencyRequirement"]
+              properties:
+                # Network service priority (high, medium, low)
+                priority:
+                  type: string
+                  enum: ["high", "medium", "low"]
+                  description: "Priority level for this network service"
+                
+                # Maximum allowed latency for this service in milliseconds
+                latencyRequirement:
+                  type: integer
+                  minimum: 1
+                  description: "Maximum allowed latency in milliseconds"
+                
+                # Optional: Whether this service requires SR-IOV acceleration
+                requireSRIOV:
+                  type: boolean
+                  description: "Whether SR-IOV acceleration is required"
+                
+                # Optional: Whether this service requires DPDK acceleration
+                requireDPDK:
+                  type: boolean
+                  description: "Whether DPDK acceleration is required"
+                
+                # Optional: Cloud fallback configuration
+                cloudFallback:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      description: "Whether to enable cloud fallback for this service"
+                    strategy:
+                      type: string
+                      enum: ["fast", "balanced", "reliable"]
+                      description: "Fallback strategy to use when transitioning to cloud"
+                  description: "Configuration for cloud fallback behavior"
+                
+                # Connection configurations for the service
+                connections:
+                  type: array
+                  items:
+                    type: object
+                    required: ["name", "ports"]
+                    properties:
+                      name:
+                        type: string
+                        description: "Name of the connection"
+                      ports:
+                        type: array
+                        items:
+                          type: object
+                          required: ["port", "protocol"]
+                          properties:
+                            port:
+                              type: integer
+                              minimum: 1
+                              maximum: 65535
+                              description: "Port number"
+                            protocol:
+                              type: string
+                              enum: ["TCP", "UDP", "SCTP"]
+                              description: "Protocol for this port"
+                      encryption:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            description: "Whether to enable encryption for this connection"
+                          type:
+                            type: string
+                            enum: ["TLS", "DTLS", "WireGuard"]
+                            description: "Type of encryption to use"
+                        description: "Encryption configuration for this connection"
+                  description: "Connection configurations for the service"
+            
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: ["Pending", "Ready", "Error"]
+                  description: "Current phase of the network service"
+                message:
+                  type: string
+                  description: "Human-readable message about the current status"
+                activeConnections:
+                  type: integer
+                  description: "Number of active connections using this service"
+                currentLatency:
+                  type: integer
+                  description: "Current observed latency in milliseconds"
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: ["type", "status"]
+                    properties:
+                      type:
+                        type: string
+                        description: "Type of condition"
+                      status:
+                        type: string
+                        enum: ["True", "False", "Unknown"]
+                        description: "Status of the condition"
+                      reason:
+                        type: string
+                        description: "Machine-readable reason for the condition"
+                      message:
+                        type: string
+                        description: "Human-readable message about the condition"
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                        description: "Last time the condition changed"
+                  description: "Current conditions of the network service"
+              description: "Status of the network service"
+      
+      # Columns for the kubectl get command
+      additionalPrinterColumns:
+      - name: Priority
+        type: string
+        jsonPath: .spec.priority
+        description: "Priority level"
+      - name: Latency-Req
+        type: integer
+        jsonPath: .spec.latencyRequirement
+        description: "Latency requirement (ms)"
+      - name: SR-IOV
+        type: boolean
+        jsonPath: .spec.requireSRIOV
+        description: "SR-IOV required"
+      - name: Status
+        type: strign
+        jsonPath: .status.phase
+        description: "Current status"
+      - name: Age
+        type: date
+        jsonPath: .metadata.creationTimestamp
+        description: "Age"
+
+      # Client can only update the status field
+      subresources:
+        status: {}
+  
+  scope: Namespaced
+  names:
+    # Kind is the CamelCase representation
+    kind: NetworkService
+    # Plural is the API endpoint and resource name in plural form
+    plural: networkservices
+    # Singular is the singular form of the resource name
+    singular: networkservice
+    # ShortNames are aliases for kubectl and other tools
+    shortNames:
+    - nsmesh
+    - nsm
+    # ListKind is the kind used for list operations
+    listKind: NetworkServiceList
